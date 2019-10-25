@@ -1,17 +1,11 @@
 const express = require('express');
+const app = express();
 const bodyParser = require('body-parser');
 
 const MongoClient = require('mongodb').MongoClient;
+const ObjectId = require('mongodb').ObjectId;
 const uri = "mongodb+srv://andrew_node:admin123@andrewcluster-oklwj.mongodb.net/test?retryWrites=true&w=majority"
 const database = new MongoClient(uri, {useNewUrlParser: true, useUnifiedTopology: true});
-const app = express();
-
-/*
-client.connect(err => {
-    const db = client.db('andrew-node');
-    client.close();
-});
-*/
 
 database.connect((err, client) => {
     if (err) return console.log(err);
@@ -50,3 +44,29 @@ app.post('/show', (req,res) => {
         res.redirect('/show');
     })
 });
+
+app.route('/edit/:id')
+.get((req, res) => {
+    var id = req.params.id;
+
+    db.collection('data').find(ObjectId(id)).toArray((err, result) => {
+        if (err) return res.send(err);
+        res.render('edit.ejs', {data: result})
+    })
+})
+.post((req, res) => {
+    var id = req.params.id;
+    var name = req.body.name;
+    var surname = req.body.surname;
+
+    db.collection('data').updateOne({_id: ObjectId(id)}, {
+        $set: {
+            name: name,
+            surname: surname
+        }
+    }, (err, result) => {
+        if (err) return res.send(err);
+        res.redirect('/show')
+        console.log('Atualizado no Banco de Dados!');
+    })
+})
